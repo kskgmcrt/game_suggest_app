@@ -1,542 +1,635 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Idea Generator</title>
+    <title>ゲーム原案ジェネレーター & アイデアノート</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        },
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; color: #1e293b; }
-        .keyword-btn { 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            border: 2px solid transparent;
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
         }
-        .keyword-btn.selected { 
-            background-color: #10b981; 
-            color: white; 
-            border-color: #059669; 
-            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); 
-            transform: translateY(-2px) scale(1.02); 
+
+        .keyword-tag {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
         }
-        .keyword-btn:not(.selected):hover {
-            border-color: #cbd5e1;
-            background-color: #f8fafc;
+        .keyword-tag.selected {
+            background: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+            color: #ffffff;
+            border-color: #34d399;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px) scale(1.03);
         }
-        
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .star-rating i { cursor: pointer; color: #e2e8f0; transition: color 0.2s, transform 0.1s; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .star-rating i.active { color: #fbbf24; }
-        .star-rating i:hover { transform: scale(1.2); color: #f59e0b; }
-        
-        /* Toast Notification */
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 50; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; padding: 16px 24px; border-radius: 12px; color: white; font-weight: 500; opacity: 0; transform: translateX(100%); transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); max-width: 400px; word-break: break-word; }
-        .toast.show { opacity: 1; transform: translateX(0); }
-        .toast.success { background-color: #10b981; border-left: 6px solid #059669; }
-        .toast.error { background-color: #ef4444; border-left: 6px solid #b91c1c; }
-        .toast.warning { background-color: #f59e0b; border-left: 6px solid #d97706; }
-        
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid #34d399;
+            width: 22px;
+            height: 22px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Rating Stars */
+        .star-rating i {
+            cursor: pointer;
+            transition: transform 0.15s ease, color 0.15s ease;
+        }
+        .star-rating i:hover { transform: scale(1.25); }
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            items-center;
+            gap: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast.success { background: #064e3b; border-color: #10b981; text-color: #a7f3d0; }
+        .toast.error { background: #7f1d1d; border-color: #ef4444; }
+        .toast.info { background: #1e3a8a; border-color: #3b82f6; }
+        .toast.warning { background: #78350f; border-color: #f59e0b; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-6 lg:p-8">
+<body class="min-h-screen pb-12">
 
     <div id="toast-container"></div>
 
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <div class="bg-emerald-100 p-3 rounded-xl">
-                    <i class="fa-solid fa-gamepad text-3xl text-emerald-600"></i>
+    <div id="settings-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+            <button id="close-settings-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                    <i class="fa-solid fa-key text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">ゲーム原案ジェネレーター</h1>
-                    <p class="text-slate-500 text-sm md:text-base mt-1">キーワードを選んでAIに画期的なゲームアイデアを作らせよう</p>
+                    <h3 class="text-xl font-bold text-white">Gemini API 設定</h3>
+                    <p class="text-xs text-slate-400">Gemini APIキーを設定すると、高度なAI生成機能が有効化されます</p>
                 </div>
             </div>
-            <button id="download-btn" class="hidden md:flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-md">
-                <i class="fa-solid fa-file-export"></i> JSON出力
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">API Key</label>
+                    <input type="password" id="api-key-input" placeholder="AIzaSy..." 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    <p class="text-xs text-slate-400 mt-2">
+                        ※ APIキーが未設定または通信エラーが発生した場合、本アプリ内蔵の<b>スマートローカル生成エンジン</b>が自動補完するため、いつでも快適に利用可能です。
+                    </p>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-emerald-400"><i class="fa-solid fa-shield-halved mr-1"></i> セキュリティについて</p>
+                    <p>入力したAPIキーはお使いのブラウザ（LocalStorage）にのみ安全に保存され、外部サーバーに送信されることはありません。</p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="clear-key-btn" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800 transition-colors">キーを消去</button>
+                <button id="save-settings-btn" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/30">設定を保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button id="close-edit-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
             </button>
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-emerald-400"></i> 原案の編集
+            </h3>
+            <input type="hidden" id="edit-idea-id">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">タイトル</label>
+                    <input type="text" id="edit-title" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">キャッチコピー</label>
+                    <input type="text" id="edit-tagline" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">コアメカニクス</label>
+                    <textarea id="edit-mechanics" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">ビジュアル＆サウンド方針</label>
+                    <textarea id="edit-audiovisual" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">ターゲット・プレイ感</label>
+                    <textarea id="edit-target" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="cancel-edit-btn" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800">キャンセル</button>
+                <button id="save-edit-btn" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold">更新保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 pt-6">
+        <header class="bg-slate-900/80 backdrop-blur border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-tr from-emerald-600 to-teal-400 p-3 rounded-xl text-white shadow-lg shadow-emerald-900/30">
+                        <i class="fa-solid fa-lightbulb text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                            ゲーム原案ジェネレーター
+                            <span class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">v3.0</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 mt-0.5">要素を組み合わせて画期的なゲーム企画を無限生成・管理</p>
+                    </div>
+                </div>
+                <button id="open-settings-btn" class="md:hidden bg-slate-800 text-slate-300 p-2.5 rounded-xl hover:text-white border border-slate-700">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+                <div id="engine-badge" class="text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 font-medium bg-emerald-950/60 border-emerald-500/30 text-emerald-400">
+                    <i class="fa-solid fa-bolt text-xs"></i>
+                    <span id="engine-mode-text">スマートローカルAIエンジン稼働中</span>
+                </div>
+                <button id="open-settings-desktop-btn" class="hidden md:flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors">
+                    <i class="fa-solid fa-gear text-emerald-400"></i> API設定
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Left Column: Keywords -->
-            <div class="lg:col-span-5 flex flex-col gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
-                        <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
-                            <i class="fa-solid fa-tags text-emerald-500"></i> キーワード選択
-                        </h2>
-                        <div class="flex gap-2">
-                            <button id="clear-select-btn" class="text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-colors">クリア</button>
-                            <button id="random-select-btn" class="text-sm bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg font-medium transition-colors">おまかせ</button>
+            
+            <!-- Left Column: 50 Keyword Selection Engine (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                    <div class="flex flex-col gap-3 mb-4">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-cubes text-emerald-400"></i> 構成要素タグ (全50種)
+                            </h2>
+                            <span id="selection-count" class="text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                                0 / 8 選択中
+                            </span>
+                        </div>
+
+                        <!-- Category Filter Buttons -->
+                        <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-filters">
+                            <button class="cat-filter-btn active px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium whitespace-nowrap" data-cat="all">すべて</button>
+                            <button class="cat-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white font-medium whitespace-nowrap" data-cat="genre">ジャンル</button>
+                            <button class="cat-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white font-medium whitespace-nowrap" data-cat="world">世界観</button>
+                            <button class="cat-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white font-medium whitespace-nowrap" data-cat="visual">グラフィック</button>
+                            <button class="cat-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white font-medium whitespace-nowrap" data-cat="system">システム</button>
                         </div>
                     </div>
-                    <p class="text-sm text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> 要素を2〜5個選ぶとユニークなアイデアが生まれやすくなります。
-                    </p>
-                    <div id="keywords-container" class="flex flex-wrap gap-2 mb-6 max-h-[40vh] overflow-y-auto p-2 -mx-2">
-                        <!-- Keywords injected here -->
+
+                    <!-- Keywords Tag Container -->
+                    <div id="keywords-container" class="flex flex-wrap gap-2 mb-5 max-h-[380px] overflow-y-auto p-1 border border-slate-800/80 bg-slate-950/50 rounded-xl">
+                        <!-- Keywords will be rendered here -->
                     </div>
-                    
-                    <button id="generate-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl transition-all shadow-lg shadow-emerald-200 flex justify-center items-center gap-2 relative overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed text-lg">
-                        <span id="generate-text"><i class="fa-solid fa-wand-magic-sparkles"></i> 選択した要素で原案を生成</span>
+
+                    <div class="flex items-center justify-between gap-2 mb-4">
+                        <button id="random-select-btn" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-dice text-emerald-400"></i> おまかせ抽出
+                        </button>
+                        <button id="clear-select-btn" class="px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-slate-200 text-xs py-2.5 rounded-xl font-semibold transition-all">
+                            クリア
+                        </button>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button id="generate-btn" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-emerald-950 flex justify-center items-center gap-2 relative overflow-hidden group">
+                        <span id="generate-text" class="flex items-center gap-2 text-sm tracking-wide">
+                            <i class="fa-solid fa-wand-magic-sparkles text-emerald-200 group-hover:rotate-12 transition-transform"></i> 原案アイデアを生成
+                        </span>
                         <div id="generate-spinner" class="spinner hidden"></div>
                     </button>
                 </div>
             </div>
 
-            <!-- Right Column: Ideas List -->
-            <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex flex-col h-[calc(100vh-160px)] min-h-[600px]">
-                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
-                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
-                        <i class="fa-solid fa-box-archive text-emerald-500"></i> 保存された原案
-                    </h2>
-                    <span class="text-sm font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full shadow-inner" id="idea-count">0 件</span>
-                </div>
-                
-                <div id="ideas-list" class="flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
-                    <!-- Ideas injected here -->
-                    <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
-                        <div class="bg-slate-50 p-6 rounded-full">
-                            <i class="fa-solid fa-ghost text-5xl text-slate-300"></i>
+            <!-- Right Column: Saved Game Ideas List & Priority Engine (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col min-h-[620px]">
+                    
+                    <!-- Search & Controls Header -->
+                    <div class="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center border-b border-slate-800 pb-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-book-bookmark text-emerald-400"></i> 保存した原案ノート
+                            </h2>
+                            <span id="idea-count" class="text-xs bg-slate-800 border border-slate-700 text-slate-300 font-bold px-2.5 py-0.5 rounded-full">0 件</span>
                         </div>
-                        <div class="text-center">
-                            <p class="font-bold text-slate-500">原案はまだありません</p>
-                            <p class="text-sm mt-1">キーワードを選んで新しいゲームを生み出しましょう！</p>
+
+                        <!-- Search and Sort Bar -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative flex-1 sm:w-44">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                                <input type="text" id="search-input" placeholder="検索..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <select id="sort-select" class="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500">
+                                <option value="priority-desc">優先度が高い順</option>
+                                <option value="date-desc">新しい順</option>
+                                <option value="date-asc">古い順</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <div class="mt-4 pt-4 border-t border-slate-100 md:hidden">
-                    <button id="mobile-download-btn" class="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-medium transition-colors shadow-sm">
-                        <i class="fa-solid fa-file-export"></i> JSONを出力する
-                    </button>
+                    <!-- Ideas Container -->
+                    <div id="ideas-list" class="flex-1 overflow-y-auto space-y-4 pr-1">
+                        <!-- Idea Cards Rendered Here -->
+                    </div>
+
+                    <!-- Export Toolbar Footer -->
+                    <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                        <div class="text-xs text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-info text-emerald-500"></i> 星をクリックして優先度を変更できます
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="export-json-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl font-semibold transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-code text-emerald-400"></i> JSON出力
+                            </button>
+                            <button id="export-txt-btn" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 px-3 py-2 rounded-xl font-semibold transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-lines text-teal-400"></i> TXT出力
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Environment variables setup
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'game-idea-generator-v2';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        let userId = null;
-        let db;
-        let auth;
-        let currentIdeas = []; 
-
-        // Required + General Keywords (Total 50)
-        const allKeywords = [
-            // リクエストされた必須キーワード
-            "スマホ向け短時間プレイ", "シティポップ", "浮世絵風", 
-            "8-bitチップチューン", "カワイイメタル", "WebGL",
-            // ジャンル・システム
-            "ローグライク", "デッキ構築", "オープンワールド", "タワーディフェンス",
-            "メトロイドヴァニア", "放置系", "非対称マルチ対戦", "ハック＆スラッシュ",
-            "リズムアクション", "恋愛シミュレーション", "経営シミュレーション", "パズル",
-            "ステルス", "サバイバルクラフト", "推理・ミステリー", "テキストアドベンチャー",
-            // 世界観・テーマ
-            "サイバーパンク", "スチームパンク", "ポストアポカリプス", "ダークファンタジー",
-            "大正ロマン", "宇宙開拓", "クトゥルフ神話", "魔法少女",
-            "ゾンビパンデミック", "タイムループ", "ディストピア", "学園モノ",
-            // モチーフ・キャラクター
-            "猫", "柴犬", "ドラゴン", "巨大ロボット", 
-            "スライム", "吸血鬼", "妖怪", "忍者", 
-            // 特殊要素
-            "写真撮影", "料理・レシピ", "農業", "釣り", 
-            "ASMR", "GPS連動", "音声認識", "物理演算"
+    <script>
+        const ALL_KEYWORDS = [
+            // リクエスト必須＆人気要素 (全50個)
+            { id: 1, name: "スマホ向け短時間プレイ", category: "system" },
+            { id: 2, name: "シティポップ", category: "world" },
+            { id: 3, name: "浮世絵風", category: "visual" },
+            { id: 4, name: "8-bitチップチューン", category: "visual" },
+            { id: 5, name: "カワイイメタル", category: "world" },
+            { id: 6, name: "WebGL対応", category: "system" },
+            { id: 7, name: "ローグライク", category: "genre" },
+            { id: 8, name: "デッキ構築", category: "genre" },
+            { id: 9, name: "オープンワールド", category: "genre" },
+            { id: 10, name: "タワーディフェンス", category: "genre" },
+            { id: 11, name: "メトロイドヴァニア", category: "genre" },
+            { id: 12, name: "放置系育成", category: "genre" },
+            { id: 13, name: "非対称マルチ対戦", category: "genre" },
+            { id: 14, name: "ハック＆スラッシュ", category: "genre" },
+            { id: 15, name: "リズムアクション", category: "genre" },
+            { id: 16, name: "恋愛シミュレーション", category: "genre" },
+            { id: 17, name: "経営シミュレーション", category: "genre" },
+            { id: 18, name: "パズル＆脱出", category: "genre" },
+            { id: 19, name: "ステルスアクション", category: "genre" },
+            { id: 20, name: "サバイバルクラフト", category: "genre" },
+            { id: 21, name: "サイバーパンク", category: "world" },
+            { id: 22, name: "スチームパンク", category: "world" },
+            { id: 23, name: "ポストアポカリプス", category: "world" },
+            { id: 24, name: "ダークファンタジー", category: "world" },
+            { id: 25, name: "大正ロマン", category: "world" },
+            { id: 26, name: "宇宙開拓", category: "world" },
+            { id: 27, name: "クトゥルフ神話", category: "world" },
+            { id: 28, name: "魔法少女", category: "world" },
+            { id: 29, name: "タイムループ", category: "world" },
+            { id: 30, name: "学園サスペンス", category: "world" },
+            { id: 31, name: "モノクロサイバー", category: "visual" },
+            { id: 32, name: "水彩画風アニメーション", category: "visual" },
+            { id: 33, name: "ローポリゴン", category: "visual" },
+            { id: 34, name: "アニメ調シェーディング", category: "visual" },
+            { id: 35, name: "物理演算パズル", category: "system" },
+            { id: 36, name: "写真撮影＆鑑定", category: "system" },
+            { id: 37, name: "料理・レシピ合成", category: "system" },
+            { id: 38, name: "農業＆スローライフ", category: "system" },
+            { id: 39, name: "釣り＆深海探索", category: "system" },
+            { id: 40, name: "ASMRサウンド体験", category: "system" },
+            { id: 41, name: "GPS位置情報連動", category: "system" },
+            { id: 42, name: "時間操作メカニズム", category: "system" },
+            { id: 43, name: "猫", category: "world" },
+            { id: 44, name: "柴犬", category: "world" },
+            { id: 45, name: "巨大ロボット", category: "world" },
+            { id: 46, name: "妖怪＆妖精", category: "world" },
+            { id: 47, name: "吸血鬼", category: "world" },
+            { id: 48, name: "裏社会レストラン", category: "world" },
+            { id: 49, name: "次元切替システム", category: "system" },
+            { id: 50, name: "グラフィティ描画", category: "visual" }
         ];
-        let selectedKeywords = new Set();
 
-        // UI Elements
+        const FallbackGenerator = {
+            titlePrefixes: ["ネオ", "電脳", "幻影", "無限の", "終末の", "夕暮れ", "ゼロの", "漆黒の", "極彩色の", "猫と", "秘密の"],
+            titleSuffixes: ["クロニクル", "トリガー", "フロンティア", "シンフォニー", "ダイアリー", "ラビリンス", "サバイバー", "パラダイス", "サーガ", "プロジェクト"],
+            
+            generate(keywords) {
+                const kwStr = keywords.join("・");
+                const kw1 = keywords[0] || "冒険";
+                const kw2 = keywords[1] || "戦略";
+                const kw3 = keywords[2] || "探索";
+
+                const prefix = this.titlePrefixes[Math.floor(Math.random() * this.titlePrefixes.length)];
+                const suffix = this.titleSuffixes[Math.floor(Math.random() * this.titleSuffixes.length)];
+                const title = `${prefix}${kw1}${suffix}`;
+
+                const tagline = `${kwStr}が交錯する！新感覚のアクション体験`;
+
+                const mechanics = `・【基本ループ】1プレイ数分で楽しめるテンポの良い操作感。
+・【コアシステム】「${kw1}」の概念と「${kw2}」を掛け合わせたオリジナルゲームシステム。プレイヤーの直感的な判断が即座に戦況を変化させる。
+・【やり込み要素】「${kw3}」を活用した周回プレイ可能なビルド・カスタマイズ展開。`;
+
+                const audiovisual = `・ビジュアル: ${kw1}の世界観に合わせた洗練されたデザイン。ネオンカラーと独特の陰影効果で没入感を極大化。
+・BGM/SE: テンポ感溢れる現代的サウンドとグラフィックのFusion。爽快感のある効果音を演出。`;
+
+                const target = `・スキマ時間にサクッと上質なゲーム体験を楽しみたいゲーマー。
+・オリジナリティの高い世界観やグラフィック体験を求めるインディーゲームファン。`;
+
+                return {
+                    title: title,
+                    tagline: tagline,
+                    mechanics: mechanics,
+                    audiovisual: audiovisual,
+                    target: target
+                };
+            }
+        };
+
+        let state = {
+            selectedKeywords: new Set(),
+            savedIdeas: [],
+            activeCategory: 'all',
+            searchQuery: '',
+            sortMode: 'priority-desc',
+            apiKey: localStorage.getItem('gemini_api_key') || ''
+        };
+
+        // DOM Elements
         const keywordsContainer = document.getElementById('keywords-container');
+        const selectionCountEl = document.getElementById('selection-count');
         const generateBtn = document.getElementById('generate-btn');
         const generateText = document.getElementById('generate-text');
         const generateSpinner = document.getElementById('generate-spinner');
         const ideasListContainer = document.getElementById('ideas-list');
-        const emptyState = document.getElementById('empty-state');
-        const randomSelectBtn = document.getElementById('random-select-btn');
-        const clearSelectBtn = document.getElementById('clear-select-btn');
         const ideaCountEl = document.getElementById('idea-count');
-        const downloadBtn = document.getElementById('download-btn');
-        const mobileDownloadBtn = document.getElementById('mobile-download-btn');
-        const toastContainer = document.getElementById('toast-container');
+        const engineModeText = document.getElementById('engine-mode-text');
+        const engineBadge = document.getElementById('engine-badge');
 
         function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             
-            let icon = '';
-            if (type === 'success') icon = '<i class="fa-solid fa-circle-check mr-2"></i>';
-            if (type === 'error') icon = '<i class="fa-solid fa-circle-exclamation mr-2"></i>';
-            if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation mr-2"></i>';
+            let icon = 'fa-circle-check';
+            if (type === 'error') icon = 'fa-circle-exclamation';
+            if (type === 'info') icon = 'fa-circle-info';
+            if (type === 'warning') icon = 'fa-triangle-exclamation';
 
-            toast.innerHTML = `${icon}${message}`;
-            toastContainer.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    toast.classList.add('show');
-                });
-            });
-            
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('show'));
+
             setTimeout(() => {
                 toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
+                setTimeout(() => toast.remove(), 300);
             }, duration);
         }
 
-        function shuffleArray(array) {
-            const newArr = [...array];
-            for (let i = newArr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        function loadSavedIdeas() {
+            try {
+                const stored = localStorage.getItem('game_ideas_v3');
+                if (stored) {
+                    state.savedIdeas = JSON.parse(stored);
+                }
+            } catch (e) {
+                console.error("Storage load error", e);
+                state.savedIdeas = [];
             }
-            return newArr;
+            renderIdeas();
+        }
+
+        function saveIdeasToStorage() {
+            try {
+                localStorage.setItem('game_ideas_v3', JSON.stringify(state.savedIdeas));
+            } catch (e) {
+                console.error("Storage save error", e);
+            }
         }
 
         function renderKeywords() {
             keywordsContainer.innerHTML = '';
             
-            allKeywords.forEach(keyword => {
+            const filtered = ALL_KEYWORDS.filter(kw => {
+                if (state.activeCategory === 'all') return true;
+                return kw.category === state.activeCategory;
+            });
+
+            filtered.forEach(kw => {
                 const btn = document.createElement('button');
-                btn.className = 'keyword-btn bg-white text-slate-700 px-3 py-2 rounded-xl text-sm font-semibold shadow-sm select-none flex items-center justify-center';
-                btn.textContent = keyword;
+                const isSelected = state.selectedKeywords.has(kw.name);
                 
-                if (selectedKeywords.has(keyword)) {
-                    btn.classList.add('selected');
-                }
+                btn.className = `keyword-tag text-xs px-3 py-2 rounded-xl font-medium border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 hover:text-white ${isSelected ? 'selected' : ''}`;
+                btn.textContent = kw.name;
 
                 btn.addEventListener('click', () => {
-                    if (selectedKeywords.has(keyword)) {
-                        selectedKeywords.delete(keyword);
-                        btn.classList.remove('selected');
+                    if (state.selectedKeywords.has(kw.name)) {
+                        state.selectedKeywords.delete(kw.name);
                     } else {
-                        if (selectedKeywords.size >= 8) {
-                            showToast('キーワードは最大8個までです', 'warning');
+                        if (state.selectedKeywords.size >= 8) {
+                            showToast("選択できる要素は最大8個までです", "warning");
                             return;
                         }
-                        selectedKeywords.add(keyword);
-                        btn.classList.add('selected');
+                        state.selectedKeywords.add(kw.name);
                     }
+                    renderKeywords();
+                    updateSelectionCount();
                 });
-                
+
                 keywordsContainer.appendChild(btn);
             });
         }
 
-        randomSelectBtn.addEventListener('click', () => {
-            selectedKeywords.clear();
-            const shuffled = shuffleArray(allKeywords);
-            const count = Math.floor(Math.random() * 3) + 3; // 3 to 5 items
-            for(let i=0; i<count; i++){
-                selectedKeywords.add(shuffled[i]);
-            }
-            renderKeywords();
-        });
+        function updateSelectionCount() {
+            selectionCountEl.textContent = `${state.selectedKeywords.size} / 8 選択中`;
+        }
 
-        clearSelectBtn.addEventListener('click', () => {
-            selectedKeywords.clear();
-            renderKeywords();
-        });
-
-        async function initFirebase() {
-            try {
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.warn("Firebase config not found. Running UI only mode.");
-                    renderKeywords();
-                    return;
-                }
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        loadIdeas();
-                    }
+        document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cat-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-emerald-600', 'text-white');
+                    b.classList.add('bg-slate-800', 'text-slate-400');
                 });
+                e.target.classList.add('active', 'bg-emerald-600', 'text-white');
+                e.target.classList.remove('bg-slate-800', 'text-slate-400');
                 
+                state.activeCategory = e.target.getAttribute('data-cat');
                 renderKeywords();
-            } catch (error) {
-                console.error("Firebase init error:", error);
-                showToast("データベース接続エラー", "error");
-            }
-        }
-
-        function getIdeasCollectionRef() {
-            return collection(db, 'artifacts', appId, 'users', userId, 'game_ideas');
-        }
-
-        function loadIdeas() {
-            if (!userId || !db) return;
-            // No complex queries due to rules, sort in memory
-            const q = query(getIdeasCollectionRef());
-
-            onSnapshot(q, (snapshot) => {
-                const ideas = [];
-                snapshot.forEach((doc) => {
-                    ideas.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Sort by createdAt descending
-                ideas.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis() || 0;
-                    const timeB = b.createdAt?.toMillis() || 0;
-                    return timeB - timeA;
-                });
-                
-                currentIdeas = ideas;
-                renderIdeas(ideas);
-            }, (error) => {
-                console.error("Fetch ideas error:", error);
-                showToast("データの読み込みに失敗しました", "error");
             });
-        }
+        });
 
-        async function saveIdea(ideaData) {
-            if (!userId || !db) return;
-            try {
-                const newDocRef = doc(getIdeasCollectionRef());
-                await setDoc(newDocRef, {
-                    ...ideaData,
-                    priority: 3,
-                    createdAt: serverTimestamp()
-                });
-                showToast("ゲーム原案を保存しました！", "success");
-            } catch (error) {
-                console.error("Save idea error:", error);
-                showToast("保存に失敗しました", "error");
+        document.getElementById('random-select-btn').addEventListener('click', () => {
+            state.selectedKeywords.clear();
+            const shuffled = [...ALL_KEYWORDS].sort(() => 0.5 - Math.random());
+            const count = Math.floor(Math.random() * 3) + 3; // 3 to 5 items
+            for (let i = 0; i < count; i++) {
+                state.selectedKeywords.add(shuffled[i].name);
             }
-        }
+            renderKeywords();
+            updateSelectionCount();
+            showToast("要素をランダム選定しました", "info");
+        });
 
-        async function updatePriority(ideaId, newPriority) {
-            if (!userId || !db) return;
-            try {
-                const docRef = doc(getIdeasCollectionRef(), ideaId);
-                await setDoc(docRef, { priority: newPriority }, { merge: true });
-            } catch (error) {
-                console.error("Update priority error:", error);
-                showToast("優先度の更新に失敗しました", "error");
-            }
-        }
-        
-        async function deleteIdea(ideaId) {
-             if (!userId || !db) return;
-             try {
-                 const docRef = doc(getIdeasCollectionRef(), ideaId);
-                 await deleteDoc(docRef);
-                 showToast("原案を削除しました");
-             } catch (error) {
-                 console.error("Delete idea error:", error);
-                 showToast("削除に失敗しました", "error");
-             }
-        }
+        document.getElementById('clear-select-btn').addEventListener('click', () => {
+            state.selectedKeywords.clear();
+            renderKeywords();
+            updateSelectionCount();
+        });
 
-        function renderIdeas(ideas) {
-            ideasListContainer.innerHTML = '';
-            ideaCountEl.textContent = `${ideas.length} 件`;
-
-            if (ideas.length === 0) {
-                ideasListContainer.appendChild(emptyState);
-                emptyState.style.display = 'flex';
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-
-            ideas.forEach(idea => {
-                const card = document.createElement('div');
-                card.className = 'bg-white border-2 border-slate-100 rounded-2xl p-5 hover:border-emerald-300 transition-colors relative group';
-                
-                const keywordsHtml = (idea.keywords || []).map(kw => 
-                    `<span class="inline-block bg-slate-100 text-slate-600 font-medium text-xs px-2.5 py-1 rounded-md mr-1.5 mb-2">${escapeHtml(kw)}</span>`
-                ).join('');
-
-                let starsHtml = '';
-                for (let i = 1; i <= 5; i++) {
-                    const starClass = i <= idea.priority ? 'fa-solid active' : 'fa-regular';
-                    starsHtml += `<i class="fa-star ${starClass} text-xl mx-0.5" data-val="${i}"></i>`;
-                }
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <h3 class="text-xl font-bold text-slate-800 leading-tight pr-10">${escapeHtml(idea.title)}</h3>
-                        <button class="delete-btn absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white rounded-full shadow-sm hover:shadow">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                    <div class="mb-4">${keywordsHtml}</div>
-                    <div class="bg-slate-50 p-4 rounded-xl mb-4">
-                        <p class="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(idea.description)}</p>
-                    </div>
-                    <div class="flex items-center justify-between mt-2 pt-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">優先度・評価</span>
-                        <div class="star-rating flex items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100" data-id="${idea.id}">
-                            ${starsHtml}
-                        </div>
-                    </div>
-                `;
-
-                // Star rating logic
-                const stars = card.querySelectorAll('.star-rating i');
-                stars.forEach(star => {
-                    star.addEventListener('click', (e) => {
-                        const val = parseInt(e.target.getAttribute('data-val'));
-                        const id = e.target.parentElement.getAttribute('data-id');
-                        updatePriority(id, val);
-                        
-                        // Optimistic UI update
-                        stars.forEach((s, idx) => {
-                            if (idx < val) {
-                                s.classList.remove('fa-regular');
-                                s.classList.add('fa-solid', 'active');
-                            } else {
-                                s.classList.remove('fa-solid', 'active');
-                                s.classList.add('fa-regular');
-                            }
-                        });
-                    });
-                });
-                
-                card.querySelector('.delete-btn').addEventListener('click', () => {
-                     deleteIdea(idea.id);
-                });
-
-                ideasListContainer.appendChild(card);
-            });
-        }
-
-        function escapeHtml(unsafe) {
-            if (!unsafe) return "";
-            return String(unsafe)
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
-
-        async function fetchWithRetry(url, options, maxRetries = 3) {
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error(`API Error Response (Status ${response.status}):`, errorText);
-                        
-                        // If rate limited, wait and retry
-                        if (response.status === 429 && i < maxRetries - 1) {
-                            const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                            await new Promise(r => setTimeout(r, delay));
-                            continue;
-                        }
-                        
-                        throw new Error(`APIエラー: ${response.status} ${response.statusText}`);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    if (i === maxRetries - 1) throw error;
-                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    await new Promise(r => setTimeout(r, delay));
-                }
-            }
-        }
-
-        async function generateIdea() {
-            if (selectedKeywords.size === 0) {
+        async function generateGameIdea() {
+            if (state.selectedKeywords.size === 0) {
                 showToast("キーワードを1つ以上選択してください", "warning");
                 return;
             }
 
-            const keywordsArray = Array.from(selectedKeywords);
+            const keywordsArray = Array.from(state.selectedKeywords);
             setLoading(true);
 
-            try {
-                // Ensure correct payload structure for Canvas GEMINI_API
-                const payload = {
-                    contents: [{
-                        parts: [{
-                            text: `以下のキーワードを全て組み合わせて、新しくて魅力的なゲームの原案を作成してください。\n\nキーワード: ${keywordsArray.join(", ")}\n\n出力は必ずJSON形式で、以下のキーを含めてください。\n- title: ゲームのタイトル（目を引くもの）\n- description: ゲームの世界観、システム、魅力が伝わる300文字程度の概要`
-                        }]
-                    }],
-                    systemInstruction: {
-                        parts: [{
-                            text: "あなたは世界トップクラスのゲームプランナーです。提供されたキーワードを斬新に組み合わせ、思わずプレイしたくなるようなユニークなゲーム原案を考案してください。"
-                        }]
-                    },
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                "title": { type: "STRING" },
-                                "description": { type: "STRING" }
-                            },
-                            propertyOrdering: ["title", "description"]
+            let generatedContent = null;
+            let usedFallback = false;
+
+            // Check if user set a custom key
+            if (state.apiKey) {
+                try {
+                    const promptText = `以下の要素キーワードを統合した斬新で魅力的なゲーム企画原案を作成してください。\nキーワード: ${keywordsArray.join(", ")}\n\n出力は必ず以下のキーを含むJSON形式にしてください:\n- title: ゲームタイトル\n- tagline: キャッチコピー\n- mechanics: コアゲームメカニクス（3つの箇条書き）\n- audiovisual: ビジュアル＆サウンド方針\n- target: ターゲット層・プレイ感`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: promptText }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    "title": { type: "STRING" },
+                                    "tagline": { type: "STRING" },
+                                    "mechanics": { type: "STRING" },
+                                    "audiovisual": { type: "STRING" },
+                                    "target": { type: "STRING" }
+                                },
+                                propertyOrdering: ["title", "tagline", "mechanics", "audiovisual", "target"]
+                            }
                         }
-                    }
-                };
+                    };
 
-                const apiKey = ""; // Left empty as Canvas automatically injects it
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-
-                const result = await fetchWithRetry(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts) {
-                    const jsonString = result.candidates[0].content.parts[0].text;
-                    let parsedJson;
-                    
-                    try {
-                        parsedJson = JSON.parse(jsonString);
-                    } catch (e) {
-                        console.error("Failed to parse JSON response:", jsonString);
-                        throw new Error("AIからの応答が正しいデータ形式ではありませんでした。");
-                    }
-                    
-                    if (!parsedJson.title || !parsedJson.description) {
-                         throw new Error("AIがタイトルまたは概要の生成に失敗しました。");
-                    }
-
-                    await saveIdea({
-                        title: parsedJson.title,
-                        description: parsedJson.description,
-                        keywords: keywordsArray
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${state.apiKey}`;
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
-                    
-                } else {
-                    throw new Error("APIから有効なレスポンスが返されませんでした。");
-                }
 
-            } catch (error) {
-                console.error("Generation execution error:", error);
-                showToast(error.message || "原案の生成中にエラーが発生しました", "error", 6000);
-            } finally {
-                setLoading(false);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const jsonStr = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (jsonStr) {
+                            generatedContent = JSON.parse(jsonStr);
+                        }
+                    } else {
+                        console.warn("Gemini API call failed with status:", res.status);
+                        usedFallback = true;
+                    }
+                } catch (e) {
+                    console.warn("API Call Exception, falling back to local engine:", e);
+                    usedFallback = true;
+                }
+            } else {
+                usedFallback = true;
+            }
+
+            // Fallback generation when API Key is absent or fails
+            if (!generatedContent) {
+                generatedContent = FallbackGenerator.generate(keywordsArray);
+                usedFallback = true;
+            }
+
+            // Save to State
+            const newIdea = {
+                id: 'idea_' + Date.now(),
+                title: generatedContent.title || '無題のゲーム原案',
+                tagline: generatedContent.tagline || '',
+                mechanics: generatedContent.mechanics || '',
+                audiovisual: generatedContent.audiovisual || '',
+                target: generatedContent.target || '',
+                keywords: keywordsArray,
+                priority: 3,
+                createdAt: new Date().toISOString()
+            };
+
+            state.savedIdeas.unshift(newIdea);
+            saveIdeasToStorage();
+            renderIdeas();
+            setLoading(false);
+
+            if (usedFallback && state.apiKey) {
+                showToast("API通信エラーのため、スマートローカルAIで原案を作成しました", "info");
+            } else if (usedFallback) {
+                showToast("スマートローカルエンジンでゲーム原案を作成しました", "success");
+            } else {
+                showToast("Gemini AIで高品質な原案を作成しました！", "success");
             }
         }
 
@@ -552,40 +645,273 @@
             }
         }
 
-        function downloadData() {
-            if (currentIdeas.length === 0) {
-                showToast("ダウンロードするデータがありません", "warning");
+        function renderIdeas() {
+            ideasListContainer.innerHTML = '';
+
+            let filtered = state.savedIdeas.filter(idea => {
+                if (!state.searchQuery) return true;
+                const q = state.searchQuery.toLowerCase();
+                return idea.title.toLowerCase().includes(q) || 
+                       idea.tagline.toLowerCase().includes(q) ||
+                       idea.keywords.some(k => k.toLowerCase().includes(q));
+            });
+
+            // Sorting
+            filtered.sort((a, b) => {
+                if (state.sortMode === 'priority-desc') return b.priority - a.priority;
+                if (state.sortMode === 'date-desc') return new Date(b.createdAt) - new Date(a.createdAt);
+                if (state.sortMode === 'date-asc') return new Date(a.createdAt) - new Date(b.createdAt);
+                return 0;
+            });
+
+            ideaCountEl.textContent = `${filtered.length} 件`;
+
+            if (filtered.length === 0) {
+                ideasListContainer.innerHTML = `
+                    <div class="h-64 flex flex-col items-center justify-center text-slate-500 gap-3 border-2 border-dashed border-slate-800/80 rounded-2xl p-6">
+                        <i class="fa-solid fa-folder-open text-4xl text-slate-600"></i>
+                        <p class="text-xs font-semibold">保存された原案はありません</p>
+                        <p class="text-xs text-slate-600">左側のキーワードを選択して新企画を作成しましょう</p>
+                    </div>
+                `;
                 return;
             }
-            
-            const exportData = currentIdeas.map(idea => ({
-                id: idea.id,
-                title: idea.title,
-                description: idea.description,
-                keywords: idea.keywords,
-                priority: idea.priority,
-                createdAt: idea.createdAt && idea.createdAt.toDate ? idea.createdAt.toDate().toISOString() : new Date().toISOString()
-            }));
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `game_ideas_${new Date().getTime()}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            
-            showToast("JSONデータのダウンロードを開始しました");
+            filtered.forEach(idea => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-950 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all relative group shadow-sm";
+
+                const tagsHtml = (idea.keywords || []).map(k => 
+                    `<span class="inline-block bg-slate-900 border border-slate-800 text-emerald-400 font-medium text-[11px] px-2.5 py-0.5 rounded-lg mr-1 mb-1">${escapeHtml(k)}</span>`
+                ).join('');
+
+                let starsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    const active = i <= idea.priority;
+                    starsHtml += `<i class="fa-star ${active ? 'fa-solid text-amber-400' : 'fa-regular text-slate-700'} text-sm" data-val="${i}"></i>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <div>
+                            <h3 class="text-base font-bold text-white leading-snug">${escapeHtml(idea.title)}</h3>
+                            <p class="text-xs text-emerald-400/90 font-medium mt-0.5">${escapeHtml(idea.tagline)}</p>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-90 group-hover:opacity-100">
+                            <button class="edit-btn p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-900 rounded-lg transition-colors" title="編集">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button class="delete-btn p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-900 rounded-lg transition-colors" title="削除">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">${tagsHtml}</div>
+
+                    <div class="space-y-2 text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80 mb-3">
+                        <div>
+                            <span class="font-bold text-slate-400 block mb-0.5"><i class="fa-solid fa-gamepad text-emerald-400 mr-1"></i>メカニクス:</span>
+                            <p class="whitespace-pre-line text-slate-300 leading-relaxed">${escapeHtml(idea.mechanics)}</p>
+                        </div>
+                        ${idea.audiovisual ? `
+                        <div class="pt-2 border-t border-slate-800">
+                            <span class="font-bold text-slate-400 block mb-0.5"><i class="fa-solid fa-palette text-teal-400 mr-1"></i>ビジュアル＆サウンド:</span>
+                            <p class="whitespace-pre-line text-slate-300">${escapeHtml(idea.audiovisual)}</p>
+                        </div>` : ''}
+                        ${idea.target ? `
+                        <div class="pt-2 border-t border-slate-800">
+                            <span class="font-bold text-slate-400 block mb-0.5"><i class="fa-solid fa-users text-indigo-400 mr-1"></i>ターゲット:</span>
+                            <p class="whitespace-pre-line text-slate-300">${escapeHtml(idea.target)}</p>
+                        </div>` : ''}
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-1">
+                        <span class="text-[11px] text-slate-500">${new Date(idea.createdAt).toLocaleDateString('ja-JP')}</span>
+                        <div class="star-rating flex items-center gap-1 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800" data-id="${idea.id}">
+                            ${starsHtml}
+                        </div>
+                    </div>
+                `;
+
+                // Star rating click event
+                card.querySelectorAll('.star-rating i').forEach(star => {
+                    star.addEventListener('click', (e) => {
+                        const val = parseInt(e.target.getAttribute('data-val'));
+                        const id = e.target.parentElement.getAttribute('data-id');
+                        const targetIdea = state.savedIdeas.find(i => i.id === id);
+                        if (targetIdea) {
+                            targetIdea.priority = val;
+                            saveIdeasToStorage();
+                            renderIdeas();
+                            showToast(`優先度を ★${val} に変更しました`, "info");
+                        }
+                    });
+                });
+
+                // Edit click
+                card.querySelector('.edit-btn').addEventListener('click', () => openEditModal(idea));
+
+                // Delete click
+                card.querySelector('.delete-btn').addEventListener('click', () => {
+                    state.savedIdeas = state.savedIdeas.filter(i => i.id !== idea.id);
+                    saveIdeasToStorage();
+                    renderIdeas();
+                    showToast("原案を削除しました", "info");
+                });
+
+                ideasListContainer.appendChild(card);
+            });
         }
 
-        // Event Listeners setup
-        generateBtn.addEventListener('click', generateIdea);
-        downloadBtn.addEventListener('click', downloadData);
-        mobileDownloadBtn.addEventListener('click', downloadData);
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-        // Initialize App
-        initFirebase();
+        function openEditModal(idea) {
+            document.getElementById('edit-idea-id').value = idea.id;
+            document.getElementById('edit-title').value = idea.title;
+            document.getElementById('edit-tagline').value = idea.tagline;
+            document.getElementById('edit-mechanics').value = idea.mechanics;
+            document.getElementById('edit-audiovisual').value = idea.audiovisual;
+            document.getElementById('edit-target').value = idea.target;
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
 
+        document.getElementById('close-edit-btn').addEventListener('click', () => {
+            document.getElementById('edit-modal').classList.add('hidden');
+        });
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+            document.getElementById('edit-modal').classList.add('hidden');
+        });
+
+        document.getElementById('save-edit-btn').addEventListener('click', () => {
+            const id = document.getElementById('edit-idea-id').value;
+            const targetIdea = state.savedIdeas.find(i => i.id === id);
+            if (targetIdea) {
+                targetIdea.title = document.getElementById('edit-title').value;
+                targetIdea.tagline = document.getElementById('edit-tagline').value;
+                targetIdea.mechanics = document.getElementById('edit-mechanics').value;
+                targetIdea.audiovisual = document.getElementById('edit-audiovisual').value;
+                targetIdea.target = document.getElementById('edit-target').value;
+                
+                saveIdeasToStorage();
+                renderIdeas();
+                document.getElementById('edit-modal').classList.add('hidden');
+                showToast("編集内容を保存しました", "success");
+            }
+        });
+
+        const settingsModal = document.getElementById('settings-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+
+        function updateEngineBadge() {
+            if (state.apiKey) {
+                engineModeText.textContent = "Gemini AI モード有効";
+                engineBadge.className = "text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 font-medium bg-emerald-950/80 border-emerald-500/50 text-emerald-300";
+            } else {
+                engineModeText.textContent = "スマートローカルAIエンジン稼働中";
+                engineBadge.className = "text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 font-medium bg-slate-800/80 border-slate-700 text-slate-300";
+            }
+        }
+
+        document.getElementById('open-settings-btn').addEventListener('click', () => {
+            apiKeyInput.value = state.apiKey;
+            settingsModal.classList.remove('hidden');
+        });
+        document.getElementById('open-settings-desktop-btn').addEventListener('click', () => {
+            apiKeyInput.value = state.apiKey;
+            settingsModal.classList.remove('hidden');
+        });
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            state.apiKey = apiKeyInput.value.trim();
+            localStorage.setItem('gemini_api_key', state.apiKey);
+            updateEngineBadge();
+            settingsModal.classList.add('hidden');
+            showToast("API設定を更新しました", "success");
+        });
+
+        document.getElementById('clear-key-btn').addEventListener('click', () => {
+            state.apiKey = '';
+            apiKeyInput.value = '';
+            localStorage.removeItem('gemini_api_key');
+            updateEngineBadge();
+            showToast("APIキーを消去しました", "info");
+        });
+
+        document.getElementById('export-json-btn').addEventListener('click', () => {
+            if (state.savedIdeas.length === 0) {
+                showToast("出力する原案がありません", "warning");
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.savedIdeas, null, 2));
+            const anchor = document.createElement('a');
+            anchor.setAttribute("href", dataStr);
+            anchor.setAttribute("download", `game_ideas_${Date.now()}.json`);
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            showToast("JSON形式でダウンロードしました");
+        });
+
+        document.getElementById('export-txt-btn').addEventListener('click', () => {
+            if (state.savedIdeas.length === 0) {
+                showToast("出力する原案がありません", "warning");
+                return;
+            }
+
+            let txtContent = "=========================================\n";
+            txtContent += " ゲーム原案ノート 企画出力\n";
+            txtContent += "=========================================\n\n";
+
+            state.savedIdeas.forEach((idea, idx) => {
+                txtContent += `【企画 #${idx + 1}】 ${idea.title}\n`;
+                txtContent += `キャッチコピー: ${idea.tagline}\n`;
+                txtContent += `優先度: ★${idea.priority}\n`;
+                txtContent += `構成要素: ${idea.keywords.join(', ')}\n`;
+                txtContent += `\n■ コアメカニクス:\n${idea.mechanics}\n`;
+                if (idea.audiovisual) txtContent += `\n■ ビジュアル＆サウンド:\n${idea.audiovisual}\n`;
+                if (idea.target) txtContent += `\n■ ターゲット:\n${idea.target}\n`;
+                txtContent += `-----------------------------------------\n\n`;
+            });
+
+            const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(txtContent);
+            const anchor = document.createElement('a');
+            anchor.setAttribute("href", dataStr);
+            anchor.setAttribute("download", `game_ideas_${Date.now()}.txt`);
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            showToast("TXTテキスト形式でダウンロードしました");
+        });
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            state.searchQuery = e.target.value.trim();
+            renderIdeas();
+        });
+
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            state.sortMode = e.target.value;
+            renderIdeas();
+        });
+
+        generateBtn.addEventListener('click', generateGameIdea);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderKeywords();
+            loadSavedIdeas();
+            updateEngineBadge();
+        });
     </script>
 </body>
 </html>
